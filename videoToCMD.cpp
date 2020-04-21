@@ -19,20 +19,30 @@ int main()
     cin>>filePath;
     video.open(filePath);
     if (!video.isOpened())
+    {
+        cout << "出现错误" << endl;
+        system("pause");
         return 1;
+
+    }
     int cols = video.get(CAP_PROP_FRAME_WIDTH);
     int rows = video.get(CAP_PROP_FRAME_HEIGHT);
     
     long framecount = static_cast<long>(video.get(CAP_PROP_FRAME_COUNT));
     if (framecount <= 0)
-        cout << "出现错误" <<endl;
+    {
+        cout << "出现错误" << endl;
+        system("pause");
+        return 1;
+
+    }
+       
     int fps = video.get(CAP_PROP_FPS);
-    int delty = 10;
-    int deltx = 5;
-    int value;
+   
+ 
     long n = 0;
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-    COORD  pos={ 0,0 };
+    
     vector<string> v;
     char c[] = ".,-'`:!&@#$";
     while (n++ < framecount)
@@ -48,13 +58,17 @@ int main()
             break;
         }
         string s;
+        int value;
+        int delty = 10;
+        int deltx = 5;
         for (int row = 0; row < rows - delty; row = row + delty)
         {
 
             for (int col = 0; col < cols - deltx; col = col + deltx)
             {
                 value = gray.at<uchar>(row, col);
-                s += c[int(value / 20)];
+                int pos = value / 20;          
+                s += c[pos];
                
 
             }
@@ -64,8 +78,10 @@ int main()
         }
         v.push_back(s);
         system("cls");
-        printf("正在读取:%d/%d", n, framecount);
+        printf("正在读取:%d%%\n", n*100/ framecount);
     }
+ 
+    COORD  pos = { 0,0 };
     for (int i = 0; i < v.size(); i++)
     {
         SetConsoleCursorPosition(h, pos);
@@ -73,6 +89,7 @@ int main()
         waitKey(1000 / fps);
 
     }
+    system("pause");
     return 0;
 }
 
