@@ -46,7 +46,7 @@ int main()
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     
     vector<string> v;
-    char c[] = ".,-'`:!&@#$";
+    char c[] = ".,-'`:!&$#@ ";
     while (n++ < framecount)
     {
         if (!video.read(frame))
