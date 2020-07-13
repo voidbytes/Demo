@@ -8,6 +8,11 @@
 #ifdef DEBUG
 #define CER_PATH  "E:/project/WinSSLSocket/WinSSLSocket/cer/cacert.pem"
 #define KEY_PATH  "E:/project/WinSSLSocket/WinSSLSocket/cer/privkey.pem"
+
+#define FILENAME "E:\\Downloads\\desktop.ini"
+
+
+
 #else
 #define CER_PATH "cacert.pem"
 #define KEY_PATH "privkey.pem"
@@ -37,6 +42,13 @@ DEFINE_GUID(g_guidServiceClass, 0x4E5877C0, 0x8297, 0x4AAE, 0xB7, 0xBD, 0x73, 0x
 wchar_t g_szRemoteName[BTH_MAX_NAME_SIZE + 1] = { 0 };
 wchar_t g_szRemoteAddr[CXN_BDADDR_STR_LEN + 1] = { 0 };
 int  g_ulMaxCxnCycles = 1;
+
+#define BEGIN_NUM 19900711
+#define DATA_NUM  20160113
+#define END_NUM   11700991
+#define BLOCK_DATA_SIZE (10 * 1024)
+#define FILE_HEAD  4
+#define BLOCK_HEAD 4
 
 Connect::Connect()
 
@@ -578,7 +590,51 @@ HRESULT Connect::WlanConnect() {
 				closesocket(ClientSocket);
 				
 			}
-			
+
+			//传文件
+
+			HANDLE  hFile;
+			DWORD   dwHighSize, dwBytesRead;
+			DWORD  dwFileSize;
+			hFile = CreateFile(_T(FILENAME), GENERIC_READ, FILE_SHARE_READ, NULL,
+				OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+			dwFileSize = GetFileSize(hFile, &dwHighSize);
+			std::cout << "dwFileSize=" << dwFileSize << std::endl;
+
+			BOOL bSuccess;
+			char *fileData = new char[dwFileSize];
+			bSuccess = ReadFile(hFile, fileData, dwFileSize, &dwBytesRead, NULL);
+			CloseHandle(hFile);
+	
+			if (!bSuccess || (dwBytesRead != dwFileSize))
+			{
+				std::cout << "读取失败" << std::endl;;
+				free(fileData);
+				return -1;
+			}
+			DWORD  retval = 0;
+			UINT   DataPos = 0;
+			char   *eachBuf = new char[BLOCK_DATA_SIZE + 2 * FILE_HEAD];
+			memset(eachBuf, 0, BLOCK_DATA_SIZE + 2 * FILE_HEAD);
+			eachBuf[DataPos++] = BEGIN_NUM >> 24 & 0xff;//文件起始标识符
+			eachBuf[DataPos++] = BEGIN_NUM >> 16 & 0xff;
+			eachBuf[DataPos++] = BEGIN_NUM >> 8 & 0xff;
+			eachBuf[DataPos++] = BEGIN_NUM & 0xff;
+			eachBuf[DataPos++] = dwFileSize >> 24 & 0xff;
+			eachBuf[DataPos++] = dwFileSize >> 16 & 0xff;
+			eachBuf[DataPos++] = dwFileSize >> 8 & 0xff;
+			eachBuf[DataPos++] = dwFileSize & 0xff;
+			retval = send(ClientSocket, eachBuf, 2 * FILE_HEAD, 0);
+			int start = clock();
+			{
+				retval = send(ClientSocket, fileData, dwFileSize, 0);
+				if (retval == -1)
+					std::cout << "send error!";
+				int end = clock();
+			}
+
+	
+
 			UnInitSSL(ssl);
 		}
 		
